@@ -12,7 +12,7 @@ module FileWatch
       # include_package "java.nio.file"
       file_system = FileSystems::default
       watch_service = file_system.new_watch_service
-      path = file_system.get_path "/Users/johnpcamara/Projects/Playground/FileWatch/ruby-filewatch"
+      path = file_system.get_path "/some_path"
       path.register(watch_service, StandardWatchEventKinds::ENTRY_CREATE)
       
       key = watch_service.take
