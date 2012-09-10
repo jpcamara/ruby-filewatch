@@ -105,7 +105,9 @@ module FileWatch
       end
 
       stat = File::Stat.new(path)
-      inode = [stat.ino, stat.dev_major, stat.dev_minor]
+      #JPC inode = [stat.ino, stat.dev_major, stat.dev_minor] #JPC - Moving away from ino
+      #JPC KINDA GROSS. not very reusable either.
+      inode = [(File.expand_path(@files[path].path).gsub(/\s/, '_')), stat.dev_major, stat.dev_minor]
       @statcache[path] = inode
 
       if @sincedb.member?(inode)
@@ -178,7 +180,8 @@ module FileWatch
       @logger.debug("_sincedb_open: reading from #{path}")
       db.each do |line|
         ino, dev_major, dev_minor, pos = line.split(" ", 4)
-        inode = [ino.to_i, dev_major.to_i, dev_minor.to_i]
+        #JPC inode = [ino.to_i, dev_major.to_i, dev_minor.to_i] # - move away from using a int ino
+        inode = [ino, dev_major.to_i, dev_minor.to_i]
         @logger.debug("_sincedb_open: setting #{inode.inspect} to #{pos.to_i}")
         @sincedb[inode] = pos.to_i
       end

@@ -21,6 +21,8 @@ module FileWatch
       end
     end
     
+    
+    
     def self.java_7_available?
       begin
         require 'java'
