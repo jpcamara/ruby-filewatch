@@ -68,7 +68,8 @@ module FileWatch
           next
         end
 
-        inode = [stat.ino, stat.dev_major, stat.dev_minor]
+        #JPC inode = [stat.ino, stat.dev_major, stat.dev_minor]
+        inode = [(File.expand_path(path).gsub(/\s/, '_')), stat.dev_major, stat.dev_minor]
         if inode != @files[path][:inode]
           @logger.debug("#{path}: old inode was #{@files[path][:inode].inspect}, new is #{inode.inspect}")
           yield(:delete, path)
@@ -138,7 +139,8 @@ module FileWatch
         stat = File::Stat.new(file)
         @files[file] = {
           :size => 0,
-          :inode => [stat.ino, stat.dev_major, stat.dev_minor],
+          #JPC
+          :inode => [(File.expand_path(file).gsub(/\s/, '_')), stat.dev_major, stat.dev_minor],
           :create_sent => false,
         }
         if initial

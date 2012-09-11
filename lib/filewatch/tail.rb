@@ -21,12 +21,12 @@ module FileWatch
       @files = {}
       @lastwarn = Hash.new { |h, k| h[k] = 0 }
       @buffers = {}
-      if FileWatch::java_7_available?
-        require 'filewatch/jwatch'
-        @watch = FileWatch::JWatch.new
-      else
+      # if FileWatch::java_7_available?
+      #   require 'filewatch/jwatch'
+      #   @watch = FileWatch::JWatch.new
+      # else
         @watch = FileWatch::Watch.new
-      end
+      # end
       @watch.logger = @logger
       @sincedb = {}
       @sincedb_last_write = 0
@@ -69,18 +69,16 @@ module FileWatch
             _read_file(path, &block)
           end
         when :modify
-          if !@files.member?(path)
-            @logger.debug(":modify for #{path}, does not exist in @files")
-            if _open_file(path, event)
-              _read_file(path, &block)
-            end
-          else
+          if _open_file(path, event)
             _read_file(path, &block)
           end
+          if !@files.member?(path)
+            @logger.debug(":modify for #{path}, does not exist in @files")
+          end
         when :delete
-          @logger.debug(":delete for #{path}, deleted from @files")
-          _read_file(path, &block)
-          @files[path].close
+          @logger.debug(":delete for #{path}, deleted from @files - don't keep an open handle so can't read it")
+          # _read_file(path, &block)
+          # @files[path].close
           @files.delete(path)
           @statcache.delete(path)
         else
@@ -164,6 +162,9 @@ module FileWatch
           @sincedb_last_write = now
         end
       end
+      
+      @logger.debug "closing file #{path}"
+      @files[path].close
     end # def _read_file
 
     public
