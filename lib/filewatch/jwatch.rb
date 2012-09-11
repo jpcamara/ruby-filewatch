@@ -75,9 +75,11 @@ module FileWatch
     #   :modify - file is modified (size increases)
     #   :delete - file is deleted
     public
-    def each(&block)
+    def each(stat_interval, &block)
       @logger.debug  'Starting each'
-      watch_key = @watch_service.take
+      watch_key = @watch_service.poll stat_interval, java.util.concurrent.TimeUnit::SECONDS
+      return true if watch_key.nil?
+      
       watch_key.poll_events.each do |event|
         file_name = event.context.to_absolute_path
         @logger.debug event.kind.name
@@ -119,8 +121,8 @@ module FileWatch
       #No need for discover interval - handled by the framework
       loop do
         @logger.debug 'subscribe loop'
-        break unless each(&block)
-        sleep(stat_interval)
+        break unless each(stat_interval, &block)
+        # sleep(stat_interval)
       end
     end # def subscribe
 
