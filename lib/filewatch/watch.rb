@@ -138,7 +138,7 @@ module FileWatch
         stat = File::Stat.new(file)
         @files[file] = {
           :size => 0,
-          :inode => [(File.expand_path(file).gsub(/\s/, '_')), stat.dev_major, stat.dev_minor],
+          :inode => [stat.ino, stat.dev_major, stat.dev_minor],
           :create_sent => false,
         }
         if initial
