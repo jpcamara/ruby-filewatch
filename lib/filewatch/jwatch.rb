@@ -97,6 +97,7 @@ module FileWatch
         when StandardWatchEventKinds::ENTRY_CREATE
           @logger.debug  "CREATE! #{file_name.to_s}"
           yield(:create, file_name.to_s)
+          _discover_file(file_name.to_s)
         when StandardWatchEventKinds::ENTRY_DELETE
           @logger.debug  "DELETE! #{file_name.to_s}"
           yield(:delete, file_name.to_s)
