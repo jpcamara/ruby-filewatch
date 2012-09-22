@@ -10,6 +10,8 @@ module FileWatch
 
     attr_accessor :logger
 
+    class NoSinceDBPathGiven < StandardError; end
+
     public
     def initialize(opts={})
       if opts[:logger]
@@ -33,11 +35,18 @@ module FileWatch
       @statcache = {}
       @opts = {
         :sincedb_write_interval => 10,
-        :sincedb_path => ENV["SINCEDB_PATH"] || File.join(ENV["HOME"], ".sincedb"),
         :stat_interval => 1,
         :discover_interval => 5,
         :exclude => [],
+        :start_new_files_at => :end
       }.merge(opts)
+      if !@opts.include?(:sincedb_path)
+        @opts[:sincedb_path] = File.join(ENV["HOME"], ".sincedb") if ENV.include?("HOME")
+        @opts[:sincedb_path] = ENV["SINCEDB_PATH"] if ENV.include?("SINCEDB_PATH")
+      end
+      if !@opts.include?(:sincedb_path)
+        raise NoSinceDBPathGiven.new("No HOME or SINCEDB_PATH set in environment. I need one of these set so I can keep track of the files I am following.")
+      end
       @watch.exclude(@opts[:exclude])
 
       _sincedb_open
@@ -124,9 +133,17 @@ module FileWatch
           @sincedb[inode] = 0
         end
       elsif event == :create_initial && @files[path]
-        @logger.debug("#{path}: initial create, no sincedb, seeking to end #{stat.size}")
-        @files[path].sysseek(stat.size, IO::SEEK_SET)
-        @sincedb[inode] = stat.size
+        # TODO(sissel): Allow starting at beginning of the file.
+        if @opts[:start_new_files_at] == :beginning
+          @logger.debug("#{path}: initial create, no sincedb, seeking to beginning of file")
+          @files[path].sysseek(0, IO::SEEK_SET)
+          @sincedb[inode] = 0
+        else 
+          # seek to end
+          @logger.debug("#{path}: initial create, no sincedb, seeking to end #{stat.size}")
+          @files[path].sysseek(stat.size, IO::SEEK_SET)
+          @sincedb[inode] = stat.size
+        end
       else
         @logger.debug("#{path}: staying at position 0, no sincedb")
       end
